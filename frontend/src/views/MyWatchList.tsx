@@ -4,13 +4,17 @@ import Sidebar from './Sidebar';
 import { Container, Typography, Checkbox, FormControlLabel } from '@mui/material';
 import FavoriteBorder from '@mui/icons-material/FavoriteBorder';
 import Favorite from '@mui/icons-material/Favorite';
+import { Alert, Snackbar } from "@mui/material";
 
 const MyWatchList = () => {
   const [watchlist, setWatchlist] = useState<any[]>([]);
   const [isInWatchlist, setIsInWatchlist] = useState<boolean>(true);
   const arilabel = { inputProps: { 'aria-label': 'Checkbox demo' } };
   const api = useAxios();
-
+  const [alert, setAlert] = useState<{ message: string; severity: "success" | "error" } | null>(null);
+  const showAlert = (message: string, severity: "success" | "error") => {
+    setAlert({ message, severity });
+  };
   useEffect(() => {
     const fetchWatchlist = async () => {
       try {
@@ -32,6 +36,7 @@ const MyWatchList = () => {
       console.log(itemToRemove);
       try {
         await api.delete(`/watchlist/${itemToRemove.id}/`);
+        setAlert({ message: "Removed from My Watchlist", severity: "success" });
         setWatchlist(watchlist.filter(item => item.stock_symbol !== symbol));
       } catch (error) {
         console.error('Error deleting from watchlist:', error);
@@ -47,6 +52,15 @@ const MyWatchList = () => {
         <div className="row">
           <Sidebar />
           <main role="main" className="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+            {alert && (
+              <Snackbar open={true} autoHideDuration={3000} onClose={() => setAlert(null)}
+                anchorOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                  }} >
+                  <Alert severity={alert.severity}>{alert.message}</Alert>
+              </Snackbar>
+            )}
             <div>
               <Typography variant="h3" style={{marginBottom:'10px'}}>My Watchlist</Typography>
               <div style={{ display:'flex', justifyContent:'center', alignItems:'center', flexDirection:'column',
