@@ -25,7 +25,6 @@ Clone the repository:
 
 ```bash
   git clone https://github.com/AritraRock/Stock-Monitor.git
-  cd my-project
 ```
 ### Backend
 
