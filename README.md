@@ -29,7 +29,7 @@ Clone the repository:
 ```
 ### Backend
 
-Navigate to the backend directory:
+Create a terminal at parent folder(Stock-Monitor) and navigate to the backend directory:
 
 ```bash
   cd backend_api
@@ -54,7 +54,7 @@ Start the Django development server:
 ```
 ### Frontend
 
-Navigate to the frontend directory:
+Create a terminal at parent folder(Stock-Monitor) and Navigate to the frontend directory:
 
 ```bash
   cd frontend
