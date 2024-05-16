@@ -1,11 +1,8 @@
 import React, { createContext, useState, useEffect } from "react";
-// import jwtDecode from "jwt-decode";
 import { jwtDecode } from "jwt-decode";
 import { useHistory } from "react-router-dom";
-// import useHi
-// import Alert from '@mui/material/Alert';
-// import Snackbar from '@mui/material/Snackbar';
 import { Alert, Snackbar } from "@mui/material";
+
 
 const AuthContext = createContext<any>(null);
 
@@ -32,6 +29,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const history = useHistory();
 
+    const [alert, setAlert] = useState<{ message: string; severity: "success" | "error" } | null>(null);
+
     const loginUser = async (email: string, password: string) => {
         try {
             const response = await fetch("http://127.0.0.1:8000/api/token/", {
@@ -48,20 +47,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             console.log(data);
 
             if (response.status === 200) {
-                console.log("Logged In");
+                setAlert({ message: "Login Successful", severity: "success" });
+                console.log("Logged In I am here");
                 setAuthTokens(data);
                 setUser(jwtDecode(data.access));
                 localStorage.setItem("authTokens", JSON.stringify(data));
                 history.push("/");
             } else {
+                setAlert({ message: "Username or password does not exist", severity: "error" });
                 console.log(response.status);
                 console.log("there was a server issue");
-                // Using Material UI Snackbar for alerts
-                showAlert("Username or password does not exist", "error");
             }
         } catch (error) {
             console.error("Login Error:", error);
-            showAlert("An error occurred", "error");
+            setAlert({ message: "An error occurred", severity: "error" });
         }
     };
 
@@ -88,16 +87,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 }
             );
             if (response.status === 201) {
+                setAlert({ message: "Registration Successful, Login Now", severity: "success" });
                 history.push("/login");
-                showAlert("Registration Successful, Login Now", "success");
             } else {
+                setAlert({ message: "An Error Occurred", severity: "error" });
                 console.log(response.status);
                 console.log("there was a server issue");
-                showAlert("An Error Occurred", "error");
             }
         } catch (error) {
+            setAlert({ message: "An Error Occurred", severity: "error" });
             console.error("Registration Error:", error);
-            showAlert("An error occurred", "error");
         }
     };
 
@@ -106,15 +105,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(null);
         localStorage.removeItem("authTokens");
         history.push("/login");
-        showAlert("You have been logged out", "success");
+        setAlert({ message: "You have been logged out", severity: "success" });
     };
 
     const showAlert = (message: string, severity: "success" | "error") => {
-        // Material UI Snackbar for displaying alerts
-        // Snackbar automatically disappears after a duration
-        <Snackbar open={true} autoHideDuration={6000}>
-            <Alert severity={severity}>{message}</Alert>
-        </Snackbar>;
+        setAlert({ message, severity });
     };
 
     const contextData = {
@@ -137,6 +132,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return (
         <AuthContext.Provider value={contextData}>
             {loading ? null : children}
+                {alert && (
+                    <Snackbar open={true} autoHideDuration={3000} onClose={() => setAlert(null)}
+                    anchorOrigin={{
+                        vertical: 'top',
+                        horizontal: 'right',
+                    }} >
+                        <Alert severity={alert.severity}>{alert.message}</Alert>
+                    </Snackbar>
+                )}
         </AuthContext.Provider>
     );
 };
