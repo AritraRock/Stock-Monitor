@@ -1,15 +1,16 @@
-import React, { useContext } from 'react';
-// import jwt_decode from "jwt-decode";
+import { useContext,useState } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import AuthContext from '../context/AuthContext';
-// import { Link } from 'react-router-dom';
 import { AppBar, Toolbar, Typography, Button, IconButton, Box } from '@mui/material';
-// import MenuIcon from '@mui/icons-material/Menu';
 import {Link} from '@mui/material';
 function Navbar() {
   const { user, logoutUser } = useContext(AuthContext);
   const token = localStorage.getItem("authTokens");
   let user_id: string | undefined;
+  const [isHovered, setIsHovered] = useState<boolean>(false);
+  const toggleHover = () => {
+    setIsHovered(prevState => !prevState);
+   };
 
   if (token) {
     const decoded: any = jwtDecode(token);
@@ -26,18 +27,18 @@ function Navbar() {
               </Link>
             </Typography>
             <Box style={{display:"flex", gap:"15px", justifyContent:"center",alignItems:"center"}}>
-                <Link className="" aria-current="page" href="/" color="inherit"  underline='none'>Home</Link>
+                <Link className="nav-link" aria-current="page" href="/"  underline='none' color="inherit">Home</Link>
               {token === null &&
                 <>
-                    <Link className="nav-link" href="/login" color="inherit"  underline='none' >Login</Link>
-                    <Link className="nav-link" href="/register" color="inherit"  underline='none'>Register</Link>
+                    <Link className="nav-link" href="/login" underline='none' color="inherit">Login</Link>
+                    <Link className="nav-link" href="/register"  underline='none' color="inherit">Register</Link>
                 </>
               }
               {token !== null &&
                 <>
-                    <Link color="inherit" href="/dashboard" underline='none'>Dashboard</Link>
-                    <Link color="inherit" href="/watchlist" underline='none'>Watchlist</Link>
-                    <Link color="inherit" href="/login" onClick={logoutUser} underline='none'>Logout</Link>
+                    <Link className="nav-link" href="/dashboard" underline='none' color="inherit">Dashboard</Link>
+                    <Link className="nav-link" href="/watchlist" underline='none' color="inherit">Watchlist</Link>
+                    <Link className="nav-link" onClick={logoutUser} underline='none' style={{cursor:'pointer'}} color="inherit">Logout</Link>
                 </>
               }
             </Box>
