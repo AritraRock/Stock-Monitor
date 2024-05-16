@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import useAxios from '../utils/useAxios';
 import { jwtDecode } from 'jwt-decode';
-import { FaSearch } from 'react-icons/fa';
-import TextField from '@mui/material/TextField';
 import InputBase from '@mui/material/InputBase';
 import { Button,Checkbox,FormControlLabel, Table, TableHead, TableBody, TableRow, TableCell, Typography } from '@mui/material';
 import FavoriteBorder from '@mui/icons-material/FavoriteBorder';
 import Favorite from '@mui/icons-material/Favorite';
 import SearchIcon from '@mui/icons-material/Search';
 import { styled, alpha } from '@mui/material/styles';
+import CircularProgress from '@mui/material/CircularProgress';
+import { Alert, Snackbar } from "@mui/material";
 
 const Search = styled('div')(({ theme }) => ({
   position: 'relative',
@@ -69,12 +69,13 @@ function Dashboard() {
   const [searchValue, setSearchValue] = useState<string>('');
   const [isSearched, setIsSearched] = useState<boolean>(false);
   const [isInWatchlist, setIsInWatchlist] = useState<boolean>(false);
-  const [isToggled, setIsToggled] = useState<boolean>(false);
+  const [isLoader, setLoader] =  useState<boolean>(false);
   const arilabel = { inputProps: { 'aria-label': 'Checkbox demo' } };
-
-  const handleToggle = () => {
-    setIsToggled(prevState => !prevState);
+  const [alert, setAlert] = useState<{ message: string; severity: "success" | "error" } | null>(null);
+  const showAlert = (message: string, severity: "success" | "error") => {
+    setAlert({ message, severity });
   };
+
   const api = useAxios();
   const token = localStorage.getItem('authTokens');
   let username: string | undefined;
@@ -86,6 +87,7 @@ function Dashboard() {
 
   const submitHandler = async () => {
     try {
+      setLoader(true);
       const inputValue = (document.getElementById('form1') as HTMLInputElement).value;
       const response = await fetch(
         `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${inputValue}&interval=5min&apikey=${API_KEY}`
@@ -104,7 +106,7 @@ function Dashboard() {
         close: timeSeriesData[timestamp]['4. close'],
         volume: timeSeriesData[timestamp]['5. volume'],
       }));
-
+      setLoader(false);
       setTableData(formattedData);
 
       const watchListResponse = await api.get('/watchlist/', { params: { stock_symbol: inputValue } });
@@ -113,7 +115,7 @@ function Dashboard() {
       setIsInWatchlist(symbolExists);
     } catch (error) {
       setIsSearched(false);
-      alert("No api found or may be 25 free use of API is exhausted")
+      setAlert({ message: "No api found or may be 25 free use of API is exhausted", severity: "error" });
     }
   };
 
@@ -124,6 +126,7 @@ function Dashboard() {
       const itemToRemove: any = watchListResponse.data.find((item: any) => item.stock_symbol === inputValue);
       try {
         await api.delete(`/watchlist/${itemToRemove.id}/`);
+        setAlert({ message: "Removed from My Watchlist", severity: "success" });
         setIsInWatchlist(false);
       } catch (error) {
         console.error('Error deleting from watchlist:', error);
@@ -131,6 +134,7 @@ function Dashboard() {
     } else {
       try {
         const response = await api.post('/watchlist/', { stock_symbol: searchValue });
+        setAlert({ message: "Added to My Watchlist", severity: "success" });
         setIsInWatchlist(true);
         console.log('Added to watchlist:', response.data);
       } catch (error) {
@@ -142,6 +146,15 @@ function Dashboard() {
     <div>
       <div style={{ paddingTop: '20px' }}>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {alert && (
+          <Snackbar open={true} autoHideDuration={3000} onClose={() => setAlert(null)}
+            anchorOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+              }} >
+              <Alert severity={alert.severity}>{alert.message}</Alert>
+          </Snackbar>
+        )}
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <Typography variant="h3">My Dashboard</Typography>
@@ -161,54 +174,56 @@ function Dashboard() {
                 </Button>
               </div>
             </div>
-  
-            {isSearched && (
-              <div>
-                <div style={{ borderTop: '1px solid #ccc', paddingTop: '10px', marginBottom: '10px', display:'flex', justifyContent:'center', alignItems:'center' }}>
-                    <FormControlLabel
-                      label={searchValue}
-                      control={
-                        <Checkbox
-                          {...arilabel}
-                          id='watchlist'
-                          checked={isInWatchlist}
-                          onChange={handleWatchlistChange}
-                          name="isInWatchlist"
-                          icon={<FavoriteBorder />} checkedIcon={<Favorite />}
-                        />
-                      }
-                    />
-                </div>
-                <div className="table-responsive">
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Date</TableCell>
-                        <TableCell>Time Zone (US/Eastern)</TableCell>
-                        <TableCell>Open</TableCell>
-                        <TableCell>High</TableCell>
-                        <TableCell>Low</TableCell>
-                        <TableCell>Close</TableCell>
-                        <TableCell>Volume</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {tableData.map((row, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{row.date}</TableCell>
-                          <TableCell>{row.timeZone}</TableCell>
-                          <TableCell>{row.open}</TableCell>
-                          <TableCell>{row.high}</TableCell>
-                          <TableCell>{row.low}</TableCell>
-                          <TableCell>{row.close}</TableCell>
-                          <TableCell>{row.volume}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            )}
+            {isLoader ? (<CircularProgress color="success" 
+                style={{ display:'flex', justifyContent:'center', alignItems:'center', margin:'auto', marginTop: '10rem'  }}/>) : 
+              (isSearched && (
+                  <div>
+                    <div style={{ borderTop: '1px solid #ccc', paddingTop: '10px', marginBottom: '10px', display:'flex', justifyContent:'center', alignItems:'center' }}>
+                      <FormControlLabel
+                        label={searchValue}
+                        control={
+                          <Checkbox
+                            {...arilabel}
+                            id='watchlist'
+                            checked={isInWatchlist}
+                            onChange={handleWatchlistChange}
+                            name="isInWatchlist"
+                            icon={<FavoriteBorder />} checkedIcon={<Favorite />}
+                          />
+                        }
+                      />
+                    </div>
+                    <div className="table-responsive">
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Date</TableCell>
+                            <TableCell>Time Zone (US/Eastern)</TableCell>
+                            <TableCell>Open</TableCell>
+                            <TableCell>High</TableCell>
+                            <TableCell>Low</TableCell>
+                            <TableCell>Close</TableCell>
+                            <TableCell>Volume</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {tableData.map((row, index) => (
+                            <TableRow key={index}>
+                              <TableCell>{row.date}</TableCell>
+                              <TableCell>{row.timeZone}</TableCell>
+                              <TableCell>{row.open}</TableCell>
+                              <TableCell>{row.high}</TableCell>
+                              <TableCell>{row.low}</TableCell>
+                              <TableCell>{row.close}</TableCell>
+                              <TableCell>{row.volume}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                ))
+              }
   
           </div>
         </div>
