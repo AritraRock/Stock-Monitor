@@ -77,4 +77,4 @@ Access the frontend application at http://localhost:3000 in your browser. (witho
 
 - You can search your desired stocks in the http://localhost:3000/dashboard and add to your watchlist
 
-- You can also check and manage your favorite stocks in the http://localhost:3000/watchlist and add to your watchlist
+- You can also check and manage your favorite stocks in the http://localhost:3000/watchlist
